@@ -43,6 +43,10 @@ func main() {
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	router.RegisterRoutes(r, authHandler, cfg.JWT.Secret)
 
 	port := viper.GetInt("server.port")

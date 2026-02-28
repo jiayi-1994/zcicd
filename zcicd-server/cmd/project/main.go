@@ -41,9 +41,16 @@ func main() {
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	router.RegisterRoutes(r, h, cfg.JWT.Secret)
 
-	port := 8082
+	port := cfg.Server.Port
+	if port == 0 {
+		port = 8082
+	}
 	log.Printf("project-service starting on :%d", port)
 	if err := r.Run(fmt.Sprintf(":%d", port)); err != nil {
 		log.Fatalf("failed to start server: %v", err)
