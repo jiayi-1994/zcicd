@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/zcicd/zcicd-server/internal/project/handler"
-	"github.com/zcicd/zcicd-server/internal/project/model"
 	"github.com/zcicd/zcicd-server/internal/project/repository"
 	"github.com/zcicd/zcicd-server/internal/project/router"
 	"github.com/zcicd/zcicd-server/internal/project/service"
@@ -26,11 +25,6 @@ func main() {
 	db, err := database.NewPostgres(cfg)
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
-	}
-
-	// Auto migrate
-	if err := db.AutoMigrate(&model.Project{}, &model.Service{}, &model.Environment{}); err != nil {
-		log.Fatalf("failed to migrate database: %v", err)
 	}
 
 	// Wire dependencies

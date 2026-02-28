@@ -1,0 +1,9 @@
+FROM arigaio/atlas:latest AS atlas-bin
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates
+COPY --from=atlas-bin /atlas /usr/local/bin/atlas
+COPY zcicd-server/migrations/ /migrations/
+RUN rm -f /migrations/all_migrations*.sql
+RUN atlas migrate hash --dir file:///migrations --dir-format golang-migrate
+ENTRYPOINT ["atlas"]

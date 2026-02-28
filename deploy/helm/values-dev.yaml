@@ -1,6 +1,15 @@
 global:
   imageRegistry: "docker.gh-proxy.com/ghcr.io/"
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: ghcr-secret
+
+migration:
+  enabled: true
+  baseline: "000010"
+  image:
+    repository: jiayi-1994/zcicd-migrate
+    tag: latest
+    pullPolicy: IfNotPresent
 
 authService:
   replicaCount: 1
