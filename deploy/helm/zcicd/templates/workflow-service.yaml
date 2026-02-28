@@ -27,13 +27,12 @@ spec:
           imagePullPolicy: {{ .Values.workflowService.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.workflowService.service.port }}
+              containerPort: 8080
               protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: {{ include "zcicd.fullname" . }}-config
-            - secretRef:
-                name: {{ include "zcicd.fullname" . }}-secret
+          volumeMounts:
+            - name: config
+              mountPath: /configs/config.yaml
+              subPath: config.yaml
           livenessProbe:
             httpGet:
               path: /healthz
@@ -48,6 +47,10 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.workflowService.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "zcicd.fullname" . }}-config
 ---
 apiVersion: v1
 kind: Service
@@ -60,7 +63,7 @@ spec:
   type: {{ .Values.workflowService.service.type }}
   ports:
     - port: {{ .Values.workflowService.service.port }}
-      targetPort: http
+      targetPort: 8080
       protocol: TCP
       name: http
   selector:

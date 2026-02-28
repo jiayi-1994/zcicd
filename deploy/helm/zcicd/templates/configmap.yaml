@@ -5,14 +5,45 @@ metadata:
   labels:
     {{- include "zcicd.labels" . | nindent 4 }}
 data:
-  DATABASE_HOST: {{ .Values.authService.env.DATABASE_HOST | default "zcicd-pg-postgresql" | quote }}
-  DATABASE_PORT: {{ .Values.authService.env.DATABASE_PORT | default "5432" | quote }}
-  DATABASE_DBNAME: {{ .Values.authService.env.DATABASE_DBNAME | default "zcicd" | quote }}
-  DATABASE_SSLMODE: "disable"
-  REDIS_ADDR: {{ .Values.authService.env.REDIS_ADDR | default "zcicd-redis-master:6379" | quote }}
-  NATS_URL: {{ .Values.authService.env.NATS_URL | default "nats://zcicd-nats:4222" | quote }}
-  SERVER_MODE: {{ .Values.authService.env.SERVER_MODE | default "release" | quote }}
-  MINIO_ENDPOINT: "zcicd-minio:9000"
-  MINIO_USE_SSL: "false"
-  LOG_LEVEL: "info"
-  LOG_FORMAT: "json"
+  config.yaml: |
+    server:
+      mode: release
+      port: 8080
+    database:
+      host: {{ .Values.authService.env.DATABASE_HOST | default "zcicd-pg-postgresql" }}
+      port: 5432
+      user: postgres
+      password: {{ (.Values.postgresql).auth.postgresPassword | default "zcicd123" }}
+      dbname: {{ (.Values.postgresql).auth.database | default "zcicd" }}
+      sslmode: disable
+      max_open_conns: 50
+      max_idle_conns: 10
+      conn_max_lifetime: 3600
+    redis:
+      addr: {{ .Values.authService.env.REDIS_ADDR | default "zcicd-redis-master:6379" }}
+      password: {{ (.Values.redis).auth.password | default "zcicd123" }}
+      db: 0
+      pool_size: 20
+    nats:
+      url: {{ .Values.authService.env.NATS_URL | default "nats://zcicd-nats:4222" }}
+      stream_name: ZCICD
+      max_reconnects: 10
+    minio:
+      endpoint: zcicd-minio:9000
+      access_key: {{ (.Values.minio).auth.rootUser | default "minioadmin" }}
+      secret_key: {{ (.Values.minio).auth.rootPassword | default "zcicd123" }}
+      use_ssl: false
+      bucket: zcicd
+    jwt:
+      secret: {{ .Values.jwtSecret | default "change-me-in-production-use-a-strong-secret" }}
+      expire_hours: 24
+      refresh_expire_hours: 168
+      issuer: zcicd
+    casbin:
+      model_path: configs/rbac_model.conf
+    log:
+      level: info
+      format: json
+      output: stdout
+    crypto:
+      aes_key: {{ .Values.aesKey | default "change-me-32-byte-key-for-aes!!" }}

@@ -27,13 +27,12 @@ spec:
           imagePullPolicy: {{ .Values.projectService.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.projectService.service.port }}
+              containerPort: 8080
               protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: {{ include "zcicd.fullname" . }}-config
-            - secretRef:
-                name: {{ include "zcicd.fullname" . }}-secret
+          volumeMounts:
+            - name: config
+              mountPath: /configs/config.yaml
+              subPath: config.yaml
           livenessProbe:
             httpGet:
               path: /healthz
@@ -48,6 +47,10 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.projectService.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "zcicd.fullname" . }}-config
 ---
 apiVersion: v1
 kind: Service
@@ -60,7 +63,7 @@ spec:
   type: {{ .Values.projectService.service.type }}
   ports:
     - port: {{ .Values.projectService.service.port }}
-      targetPort: http
+      targetPort: 8080
       protocol: TCP
       name: http
   selector:

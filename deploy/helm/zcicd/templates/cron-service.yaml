@@ -25,10 +25,13 @@ spec:
         - name: cron-service
           image: "{{ .Values.global.imageRegistry }}{{ .Values.cronService.image.repository }}:{{ .Values.cronService.image.tag }}"
           imagePullPolicy: {{ .Values.cronService.image.pullPolicy }}
-          envFrom:
-            - configMapRef:
-                name: {{ include "zcicd.fullname" . }}-config
-            - secretRef:
-                name: {{ include "zcicd.fullname" . }}-secret
+          volumeMounts:
+            - name: config
+              mountPath: /configs/config.yaml
+              subPath: config.yaml
           resources:
             {{- toYaml .Values.cronService.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "zcicd.fullname" . }}-config
