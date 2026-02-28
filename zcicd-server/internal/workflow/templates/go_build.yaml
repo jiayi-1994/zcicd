@@ -1,0 +1,63 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-build-{{.ServiceName}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/part-of: zcicd
+    zcicd.io/project: "{{.ProjectID}}"
+    zcicd.io/template: "go-build"
+spec:
+  params:
+    - name: repo-url
+      type: string
+    - name: branch
+      type: string
+      default: main
+    - name: commit-sha
+      type: string
+      default: ""
+    - name: image-repo
+      type: string
+    - name: image-tag
+      type: string
+    - name: go-version
+      type: string
+      default: "1.22"
+  workspaces:
+    - name: source
+    - name: docker-config
+      optional: true
+  steps:
+    - name: git-clone
+      image: alpine/git:latest
+      script: |
+        git clone --branch $(params.branch) --single-branch $(params.repo-url) /workspace/source/repo
+        cd /workspace/source/repo
+        if [ -n "$(params.commit-sha)" ]; then
+          git checkout $(params.commit-sha)
+        fi
+        echo "Cloned $(params.repo-url) at branch $(params.branch)"
+    - name: build
+      image: golang:$(params.go-version)-alpine
+      workingDir: /workspace/source/repo
+      env:
+        - name: GOPROXY
+          value: "https://goproxy.cn,direct"
+        - name: CGO_ENABLED
+          value: "0"
+        - name: GOOS
+          value: "linux"
+      script: |
+        echo "=== Go Build ==="
+        go mod download
+        go build -o /workspace/source/app ./...
+        echo "Build completed successfully"
+    - name: docker-build-push
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --dockerfile=Dockerfile
+        - --context=/workspace/source/repo
+        - --destination=$(params.image-repo):$(params.image-tag)
+        - --cache=true
+        - --cache-ttl=168h

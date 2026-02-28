@@ -1,0 +1,73 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: nodejs-build-{{.ServiceName}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/part-of: zcicd
+    zcicd.io/project: "{{.ProjectID}}"
+    zcicd.io/template: "nodejs"
+spec:
+  params:
+    - name: repo-url
+      type: string
+    - name: branch
+      type: string
+      default: main
+    - name: commit-sha
+      type: string
+      default: ""
+    - name: image-repo
+      type: string
+    - name: image-tag
+      type: string
+    - name: node-version
+      type: string
+      default: "20"
+    - name: package-manager
+      type: string
+      default: "npm"
+    - name: build-command
+      type: string
+      default: "npm run build"
+  workspaces:
+    - name: source
+    - name: npm-cache
+      optional: true
+    - name: docker-config
+      optional: true
+  steps:
+    - name: git-clone
+      image: alpine/git:latest
+      script: |
+        git clone --branch $(params.branch) --single-branch $(params.repo-url) /workspace/source/repo
+        cd /workspace/source/repo
+        if [ -n "$(params.commit-sha)" ]; then
+          git checkout $(params.commit-sha)
+        fi
+    - name: install-deps
+      image: node:$(params.node-version)-alpine
+      workingDir: /workspace/source/repo
+      script: |
+        echo "=== Install Dependencies ==="
+        if [ "$(params.package-manager)" = "yarn" ]; then
+          yarn install --frozen-lockfile
+        elif [ "$(params.package-manager)" = "pnpm" ]; then
+          npm install -g pnpm && pnpm install --frozen-lockfile
+        else
+          npm ci
+        fi
+    - name: build
+      image: node:$(params.node-version)-alpine
+      workingDir: /workspace/source/repo
+      script: |
+        echo "=== Build ==="
+        $(params.build-command)
+        echo "Build completed"
+    - name: docker-build-push
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --dockerfile=Dockerfile
+        - --context=/workspace/source/repo
+        - --destination=$(params.image-repo):$(params.image-tag)
+        - --cache=true

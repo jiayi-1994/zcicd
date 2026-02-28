@@ -1,0 +1,111 @@
+routes:
+  - uri: /api/v1/auth/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "auth-service:8081": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+        allow_methods: "GET,POST,PUT,DELETE,OPTIONS"
+      limit-req:
+        rate: 100
+        burst: 50
+        key_type: "var"
+        key: "remote_addr"
+
+  - uri: /api/v1/projects/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "project-service:8082": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/services/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "project-service:8082": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/environments/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "project-service:8082": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/workflows/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "workflow-service:8083": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/deploy/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "deploy-service:8084": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/quality/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "quality-service:8085": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/artifacts/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "artifact-service:8086": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/system/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "system-service:8087": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
+  - uri: /api/v1/webhooks/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "workflow-service:8083": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+
+  - uri: /*
+    upstream:
+      type: roundrobin
+      nodes:
+        "zcicd-web:80": 1
+    priority: -1

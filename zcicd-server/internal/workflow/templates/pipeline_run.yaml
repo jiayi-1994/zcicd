@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: wf-{{.WorkflowID}}-run-{{.RunNumber}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/part-of: zcicd
+    zcicd.io/project: "{{.ProjectID}}"
+    zcicd.io/workflow: "{{.WorkflowID}}"
+    zcicd.io/run: "{{.RunID}}"
+spec:
+  pipelineSpec:
+    tasks:
+    {{- range $i, $stage := .Stages}}
+    - name: {{$stage.Name}}
+      taskSpec:
+        steps:
+        {{- range $j, $job := $stage.Jobs}}
+        - name: {{$job.Name}}
+          image: "{{index $job.Config "image" | default "alpine:latest"}}"
+          script: |
+            {{index $job.Config "script" | default "echo 'No script configured'"}}
+        {{- end}}
+      {{- if gt $i 0}}
+      runAfter:
+        - {{(index $.Stages (sub $i 1)).Name}}
+      {{- end}}
+    {{- end}}
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+  {{- range $key, $value := .Params}}
+  params:
+    - name: {{$key}}
+      value: "{{$value}}"
+  {{- end}}

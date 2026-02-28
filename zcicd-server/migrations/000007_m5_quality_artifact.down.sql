@@ -1,0 +1,9 @@
+-- M5: Rollback quality & artifact tables
+DROP TABLE IF EXISTS helm_charts CASCADE;
+DROP TABLE IF EXISTS image_scans CASCADE;
+DROP TABLE IF EXISTS image_registries CASCADE;
+DROP TABLE IF EXISTS quality_gates CASCADE;
+DROP TABLE IF EXISTS scan_runs CASCADE;
+DROP TABLE IF EXISTS scan_configs CASCADE;
+DROP TABLE IF EXISTS test_runs CASCADE;
+DROP TABLE IF EXISTS test_configs CASCADE;

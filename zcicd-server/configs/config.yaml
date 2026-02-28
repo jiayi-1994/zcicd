@@ -1,0 +1,49 @@
+server:
+  mode: debug  # debug / release
+  port: 8080
+
+database:
+  host: localhost
+  port: 5432
+  user: zcicd
+  password: zcicd
+  dbname: zcicd
+  sslmode: disable
+  max_open_conns: 50
+  max_idle_conns: 10
+  conn_max_lifetime: 3600
+
+redis:
+  addr: localhost:6379
+  password: ""
+  db: 0
+  pool_size: 20
+
+nats:
+  url: nats://localhost:4222
+  stream_name: ZCICD
+  max_reconnects: 10
+
+minio:
+  endpoint: localhost:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  use_ssl: false
+  bucket: zcicd
+
+jwt:
+  secret: change-me-in-production
+  expire_hours: 24
+  refresh_expire_hours: 168
+  issuer: zcicd
+
+casbin:
+  model_path: configs/rbac_model.conf
+
+log:
+  level: debug  # debug / info / warn / error
+  format: json  # json / console
+  output: stdout
+
+crypto:
+  aes_key: change-me-32-bytes-key-here!!!!!  # 32 bytes for AES-256

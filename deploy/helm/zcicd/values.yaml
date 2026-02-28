@@ -1,0 +1,206 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Backend services
+authService:
+  replicaCount: 2
+  image:
+    repository: zcicd/auth-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8081
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  env:
+    SERVER_MODE: release
+    DATABASE_HOST: zcicd-postgresql
+    DATABASE_PORT: "5432"
+    DATABASE_DBNAME: zcicd
+    REDIS_ADDR: zcicd-redis-master:6379
+    NATS_URL: nats://zcicd-nats:4222
+
+projectService:
+  replicaCount: 2
+  image:
+    repository: zcicd/project-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8082
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+workflowService:
+  replicaCount: 2
+  image:
+    repository: zcicd/workflow-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8083
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+deployService:
+  replicaCount: 2
+  image:
+    repository: zcicd/deploy-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8084
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+qualityService:
+  replicaCount: 1
+  image:
+    repository: zcicd/quality-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8085
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+artifactService:
+  replicaCount: 1
+  image:
+    repository: zcicd/artifact-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8086
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+systemService:
+  replicaCount: 1
+  image:
+    repository: zcicd/system-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8087
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+cronService:
+  replicaCount: 1
+  image:
+    repository: zcicd/cron-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Frontend
+web:
+  replicaCount: 2
+  image:
+    repository: zcicd/web
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Infrastructure
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: zcicd123
+    database: zcicd
+  primary:
+    persistence:
+      size: 20Gi
+
+redis:
+  enabled: true
+  auth:
+    password: zcicd123
+  master:
+    persistence:
+      size: 5Gi
+
+nats:
+  enabled: true
+  config:
+    jetstream:
+      enabled: true
+      memStorage:
+        size: 1Gi
+      fileStorage:
+        size: 10Gi
+
+minio:
+  enabled: true
+  auth:
+    rootUser: minioadmin
+    rootPassword: minioadmin123
+  persistence:
+    size: 50Gi
+
+# Ingress (APISIX)
+ingress:
+  enabled: true
+  className: apisix
+  host: zcicd.local
+  tls: false

@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: java-maven-build-{{.ServiceName}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/part-of: zcicd
+    zcicd.io/project: "{{.ProjectID}}"
+    zcicd.io/template: "java-maven"
+spec:
+  params:
+    - name: repo-url
+      type: string
+    - name: branch
+      type: string
+      default: main
+    - name: commit-sha
+      type: string
+      default: ""
+    - name: image-repo
+      type: string
+    - name: image-tag
+      type: string
+    - name: java-version
+      type: string
+      default: "17"
+    - name: maven-goals
+      type: string
+      default: "clean package -DskipTests"
+  workspaces:
+    - name: source
+    - name: maven-cache
+      optional: true
+    - name: docker-config
+      optional: true
+  steps:
+    - name: git-clone
+      image: alpine/git:latest
+      script: |
+        git clone --branch $(params.branch) --single-branch $(params.repo-url) /workspace/source/repo
+        cd /workspace/source/repo
+        if [ -n "$(params.commit-sha)" ]; then
+          git checkout $(params.commit-sha)
+        fi
+    - name: maven-build
+      image: maven:3.9-eclipse-temurin-$(params.java-version)
+      workingDir: /workspace/source/repo
+      script: |
+        echo "=== Maven Build ==="
+        mvn $(params.maven-goals) \
+          -Dmaven.repo.local=/workspace/maven-cache/.m2/repository
+        echo "Maven build completed"
+    - name: docker-build-push
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --dockerfile=Dockerfile
+        - --context=/workspace/source/repo
+        - --destination=$(params.image-repo):$(params.image-tag)
+        - --cache=true

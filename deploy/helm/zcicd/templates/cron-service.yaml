@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zcicd.fullname" . }}-cron-service
+  labels:
+    {{- include "zcicd.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cron-service
+spec:
+  replicas: {{ .Values.cronService.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cron-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cron-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: cron-service
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.cronService.image.repository }}:{{ .Values.cronService.image.tag }}"
+          imagePullPolicy: {{ .Values.cronService.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "zcicd.fullname" . }}-config
+            - secretRef:
+                name: {{ include "zcicd.fullname" . }}-secret
+          resources:
+            {{- toYaml .Values.cronService.resources | nindent 12 }}

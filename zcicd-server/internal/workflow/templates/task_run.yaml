@@ -1,0 +1,63 @@
+apiVersion: tekton.dev/v1
+kind: TaskRun
+metadata:
+  name: build-{{.BuildConfigID}}-run-{{.RunNumber}}
+  namespace: {{.Namespace}}
+  labels:
+    app.kubernetes.io/part-of: zcicd
+    zcicd.io/project: "{{.ProjectID}}"
+    zcicd.io/build-config: "{{.BuildConfigID}}"
+    zcicd.io/build-run: "{{.RunID}}"
+spec:
+  taskSpec:
+    params:
+      - name: repo-url
+        type: string
+      - name: branch
+        type: string
+      - name: commit-sha
+        type: string
+      - name: image-repo
+        type: string
+      - name: image-tag
+        type: string
+    steps:
+      - name: git-clone
+        image: alpine/git:latest
+        script: |
+          git clone --branch $(params.branch) --single-branch $(params.repo-url) /workspace/source/repo
+          cd /workspace/source/repo
+          if [ -n "$(params.commit-sha)" ]; then
+            git checkout $(params.commit-sha)
+          fi
+      - name: build
+        image: golang:1.22-alpine
+        workingDir: /workspace/source/repo
+        script: |
+          {{.BuildScript}}
+      - name: docker-build-push
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+          - --dockerfile={{.DockerfilePath}}
+          - --context=/workspace/source/repo/{{.DockerContext}}
+          - --destination={{.ImageRepo}}:{{.ImageTag}}
+          {{- if .CacheEnabled}}
+          - --cache=true
+          - --cache-ttl=168h
+          {{- end}}
+    workspaces:
+      - name: source
+  params:
+    - name: repo-url
+      value: "{{.RepoURL}}"
+    - name: branch
+      value: "{{.Branch}}"
+    - name: commit-sha
+      value: "{{.CommitSHA}}"
+    - name: image-repo
+      value: "{{.ImageRepo}}"
+    - name: image-tag
+      value: "{{.ImageTag}}"
+  workspaces:
+    - name: source
+      emptyDir: {}

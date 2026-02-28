@@ -1,0 +1,83 @@
+global:
+  imageRegistry: "ghcr.io/"
+  imagePullSecrets:
+    - name: ghcr-secret
+
+authService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+projectService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+workflowService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+deployService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+qualityService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+artifactService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+systemService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+cronService:
+  replicaCount: 1
+  image:
+    tag: latest
+
+web:
+  replicaCount: 1
+  image:
+    tag: latest
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: zcicd123
+    database: zcicd
+  primary:
+    persistence:
+      size: 10Gi
+
+redis:
+  enabled: true
+  auth:
+    password: zcicd123
+  master:
+    persistence:
+      size: 2Gi
+
+nats:
+  enabled: true
+
+minio:
+  enabled: true
+  auth:
+    rootUser: minioadmin
+    rootPassword: minioadmin123
+  persistence:
+    size: 20Gi
+
+ingress:
+  enabled: true
+  className: apisix
+  host: zcicd.dev
+  tls: false

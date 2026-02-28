@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zcicd.fullname" . }}-artifact-service
+  labels:
+    {{- include "zcicd.labels" . | nindent 4 }}
+    app.kubernetes.io/name: artifact-service
+spec:
+  replicas: {{ .Values.artifactService.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: artifact-service
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: artifact-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: artifact-service
+          image: "{{ .Values.global.imageRegistry }}{{ .Values.artifactService.image.repository }}:{{ .Values.artifactService.image.tag }}"
+          imagePullPolicy: {{ .Values.artifactService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.artifactService.service.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "zcicd.fullname" . }}-config
+            - secretRef:
+                name: {{ include "zcicd.fullname" . }}-secret
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.artifactService.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "zcicd.fullname" . }}-artifact-service
+  labels:
+    {{- include "zcicd.labels" . | nindent 4 }}
+    app.kubernetes.io/name: artifact-service
+spec:
+  type: {{ .Values.artifactService.service.type }}
+  ports:
+    - port: {{ .Values.artifactService.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: artifact-service
+    app.kubernetes.io/instance: {{ .Release.Name }}

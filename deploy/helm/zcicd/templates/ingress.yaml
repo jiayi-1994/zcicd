@@ -1,0 +1,98 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "zcicd.fullname" . }}-ingress
+  labels:
+    {{- include "zcicd.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+spec:
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ include "zcicd.fullname" . }}-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /api/v1/projects
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-project-service
+                port:
+                  number: {{ .Values.projectService.service.port }}
+          - path: /api/v1/services
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-project-service
+                port:
+                  number: {{ .Values.projectService.service.port }}
+          - path: /api/v1/environments
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-project-service
+                port:
+                  number: {{ .Values.projectService.service.port }}
+          - path: /api/v1/workflows
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-workflow-service
+                port:
+                  number: {{ .Values.workflowService.service.port }}
+          - path: /api/v1/deployments
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-deploy-service
+                port:
+                  number: {{ .Values.deployService.service.port }}
+          - path: /api/v1/quality
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-quality-service
+                port:
+                  number: {{ .Values.qualityService.service.port }}
+          - path: /api/v1/artifacts
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-artifact-service
+                port:
+                  number: {{ .Values.artifactService.service.port }}
+          - path: /api/v1/system
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-system-service
+                port:
+                  number: {{ .Values.systemService.service.port }}
+          - path: /api/v1/webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-workflow-service
+                port:
+                  number: {{ .Values.workflowService.service.port }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "zcicd.fullname" . }}-web
+                port:
+                  number: {{ .Values.web.service.port }}
+{{- end }}
