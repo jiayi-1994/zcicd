@@ -35,8 +35,6 @@ spec:
             - apply
             - --dir
             - file:///migrations
-            - --dir-format
-            - golang-migrate
             - --url
             - $(DATABASE_URL)
             - --baseline
