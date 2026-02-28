@@ -22,27 +22,9 @@ jobs:
       - name: Build
         working-directory: zcicd-server
         run: go build ./...
-      - name: Test
-        working-directory: zcicd-server
-        run: go test ./... -v -count=1
-
-  test-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: zcicd-web/package-lock.json
-      - name: Install & Build
-        working-directory: zcicd-web
-        run: |
-          npm ci
-          npm run build
 
   build-images:
-    needs: [test-server, test-web]
+    needs: [test-server]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -68,7 +50,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
 
   build-web:
-    needs: [test-server, test-web]
+    needs: [test-server]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

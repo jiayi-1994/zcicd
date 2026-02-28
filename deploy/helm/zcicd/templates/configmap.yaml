@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "zcicd.labels" . | nindent 4 }}
 data:
-  DATABASE_HOST: {{ .Values.authService.env.DATABASE_HOST | default "zcicd-postgresql" | quote }}
+  DATABASE_HOST: {{ .Values.authService.env.DATABASE_HOST | default "zcicd-pg-postgresql" | quote }}
   DATABASE_PORT: {{ .Values.authService.env.DATABASE_PORT | default "5432" | quote }}
   DATABASE_DBNAME: {{ .Values.authService.env.DATABASE_DBNAME | default "zcicd" | quote }}
   DATABASE_SSLMODE: "disable"

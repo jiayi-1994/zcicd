@@ -1,83 +1,85 @@
 global:
-  imageRegistry: "ghcr.io/"
-  imagePullSecrets:
-    - name: ghcr-secret
+  imageRegistry: "docker.gh-proxy.com/ghcr.io/"
+  imagePullSecrets: []
 
 authService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-auth
     tag: latest
+  env:
+    DATABASE_HOST: zcicd-pg-postgresql
+    REDIS_ADDR: zcicd-redis-master:6379
+    NATS_URL: nats://zcicd-nats:4222
 
 projectService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-project
     tag: latest
 
 workflowService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-workflow
     tag: latest
 
 deployService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-deploy
     tag: latest
 
 qualityService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-quality
     tag: latest
 
 artifactService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-artifact
     tag: latest
 
 systemService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-system
     tag: latest
 
 cronService:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-cron
     tag: latest
 
 web:
   replicaCount: 1
   image:
+    repository: jiayi-1994/zcicd-web
     tag: latest
 
+# Infrastructure deployed as separate Helm releases
 postgresql:
-  enabled: true
+  enabled: false
   auth:
     postgresPassword: zcicd123
     database: zcicd
-  primary:
-    persistence:
-      size: 10Gi
 
 redis:
-  enabled: true
+  enabled: false
   auth:
     password: zcicd123
-  master:
-    persistence:
-      size: 2Gi
 
 nats:
-  enabled: true
+  enabled: false
 
 minio:
-  enabled: true
+  enabled: false
   auth:
     rootUser: minioadmin
-    rootPassword: minioadmin123
-  persistence:
-    size: 20Gi
+    rootPassword: zcicd123
 
 ingress:
-  enabled: true
-  className: apisix
-  host: zcicd.dev
-  tls: false
+  enabled: false
