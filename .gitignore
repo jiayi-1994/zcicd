@@ -24,7 +24,7 @@ Thumbs.db
 kubeconfig
 
 # OMC state (local only)
-.omc/
+# .omc/
 .claude/
 %TEMP%/
 nul

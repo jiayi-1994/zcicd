@@ -29,10 +29,10 @@ const PROVIDER_MAP: Record<string, { color: string; label: string }> = {
   jira: { color: 'blue', label: 'Jira' },
 }
 
-const STATUS_MAP: Record<string, { color: 'success' | 'error' | 'default'; label: string }> = {
+const STATUS_MAP: Record<string, { color: 'success' | 'error' | 'warning'; label: string }> = {
   active: { color: 'success', label: '正常' },
   error: { color: 'error', label: '异常' },
-  inactive: { color: 'default', label: '未激活' },
+  inactive: { color: 'warning', label: '未激活' },
 }
 
 export default function IntegrationList() {
