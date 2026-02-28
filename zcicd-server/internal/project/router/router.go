@@ -19,8 +19,8 @@ func RegisterRoutes(r *gin.Engine, h *handler.ProjectHandler, jwtSecret string) 
 	projects.DELETE("/:id", h.DeleteProject)
 
 	// Service routes (nested under project)
-	projects.POST("/:project_id/services", h.CreateService)
-	projects.GET("/:project_id/services", h.ListServices)
+	projects.POST("/:id/services", h.CreateService)
+	projects.GET("/:id/services", h.ListServices)
 
 	// Service routes (standalone)
 	services := api.Group("/services")
@@ -29,8 +29,8 @@ func RegisterRoutes(r *gin.Engine, h *handler.ProjectHandler, jwtSecret string) 
 	services.DELETE("/:id", h.DeleteService)
 
 	// Environment routes (nested under project)
-	projects.POST("/:project_id/environments", h.CreateEnvironment)
-	projects.GET("/:project_id/environments", h.ListEnvironments)
+	projects.POST("/:id/environments", h.CreateEnvironment)
+	projects.GET("/:id/environments", h.ListEnvironments)
 
 	// Environment routes (standalone)
 	envs := api.Group("/environments")

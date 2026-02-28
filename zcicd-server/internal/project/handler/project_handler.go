@@ -111,7 +111,7 @@ func (h *ProjectHandler) ListProjects(c *gin.Context) {
 // ==================== Service Handlers ====================
 
 func (h *ProjectHandler) CreateService(c *gin.Context) {
-	projectID := c.Param("project_id")
+	projectID := c.Param("id")
 	var req service.CreateServiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -160,7 +160,7 @@ func (h *ProjectHandler) DeleteService(c *gin.Context) {
 }
 
 func (h *ProjectHandler) ListServices(c *gin.Context) {
-	projectID := c.Param("project_id")
+	projectID := c.Param("id")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
@@ -182,7 +182,7 @@ func (h *ProjectHandler) ListServices(c *gin.Context) {
 // ==================== Environment Handlers ====================
 
 func (h *ProjectHandler) CreateEnvironment(c *gin.Context) {
-	projectID := c.Param("project_id")
+	projectID := c.Param("id")
 	var req service.CreateEnvRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -231,7 +231,7 @@ func (h *ProjectHandler) DeleteEnvironment(c *gin.Context) {
 }
 
 func (h *ProjectHandler) ListEnvironments(c *gin.Context) {
-	projectID := c.Param("project_id")
+	projectID := c.Param("id")
 	envs, err := h.svc.ListEnvironments(c.Request.Context(), projectID)
 	if err != nil {
 		h.handleError(c, err)
