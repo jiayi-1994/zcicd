@@ -9,13 +9,14 @@ migration:
   image:
     repository: jiayi-1994/zcicd-migrate
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 authService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-auth
     tag: latest
+    pullPolicy: Always
   env:
     DATABASE_HOST: zcicd-pg-postgresql
     REDIS_ADDR: zcicd-redis-master:6379
@@ -26,48 +27,56 @@ projectService:
   image:
     repository: jiayi-1994/zcicd-project
     tag: latest
+    pullPolicy: Always
 
 workflowService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-workflow
     tag: latest
+    pullPolicy: Always
 
 deployService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-deploy
     tag: latest
+    pullPolicy: Always
 
 qualityService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-quality
     tag: latest
+    pullPolicy: Always
 
 artifactService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-artifact
     tag: latest
+    pullPolicy: Always
 
 systemService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-system
     tag: latest
+    pullPolicy: Always
 
 cronService:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-cron
     tag: latest
+    pullPolicy: Always
 
 web:
   replicaCount: 1
   image:
     repository: jiayi-1994/zcicd-web
     tag: latest
+    pullPolicy: Always
 
 # Infrastructure deployed as separate Helm releases
 postgresql:

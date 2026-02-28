@@ -6,12 +6,17 @@ import (
 	"github.com/zcicd/zcicd-server/pkg/middleware"
 )
 
-func RegisterRoutes(r *gin.RouterGroup, jwtSecret string, notifyH *handler.NotifyHandler, clusterH *handler.ClusterHandler, integrationH *handler.IntegrationHandler, auditH *handler.AuditHandler) {
+func RegisterRoutes(r *gin.RouterGroup, jwtSecret string, notifyH *handler.NotifyHandler, clusterH *handler.ClusterHandler, integrationH *handler.IntegrationHandler, auditH *handler.AuditHandler, dashH *handler.DashboardHandler) {
 	auth := middleware.JWTAuth(jwtSecret)
 
 	sys := r.Group("/system")
 	sys.Use(auth)
 	{
+		// Dashboard
+		dash := sys.Group("/dashboard")
+		dash.GET("/overview", dashH.Overview)
+		dash.GET("/trends", dashH.Trends)
+
 		clusters := sys.Group("/clusters")
 		clusters.GET("", clusterH.List)
 		clusters.POST("", clusterH.Create)

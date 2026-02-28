@@ -5,17 +5,21 @@ import {
 } from 'antd'
 import {
   ProjectOutlined, CloudServerOutlined, RocketOutlined,
-  InboxOutlined,
+  InboxOutlined, AppstoreOutlined, ApiOutlined,
 } from '@ant-design/icons'
 import { projectApi } from '@/api/project'
 import { deployApi } from '@/api/deploy'
 import { systemApi } from '@/api/system'
-import { artifactApi } from '@/api/artifact'
 
 const { Title } = Typography
 
 export default function Dashboard() {
   const navigate = useNavigate()
+
+  const { data: overviewData, isLoading: loadingOverview } = useQuery({
+    queryKey: ['dashboard-overview'],
+    queryFn: () => systemApi.getDashboardOverview() as Promise<any>,
+  })
 
   const { data: projectData, isLoading: loadingProjects } = useQuery({
     queryKey: ['dashboard-projects'],
@@ -27,25 +31,9 @@ export default function Dashboard() {
     queryFn: () => deployApi.list({ page: 1, page_size: 5 }) as Promise<any>,
   })
 
-  const { data: clusterData, isLoading: loadingClusters } = useQuery({
-    queryKey: ['dashboard-clusters'],
-    queryFn: () => systemApi.listClusters({ page: 1, page_size: 100 }) as Promise<any>,
-  })
-
-  const { data: registryData, isLoading: loadingRegistries } = useQuery({
-    queryKey: ['dashboard-registries'],
-    queryFn: () => artifactApi.listRegistries({ page: 1, page_size: 100 }) as Promise<any>,
-  })
-
+  const overview = overviewData?.data
   const projects = projectData?.data ?? []
   const deploys = deployData?.data ?? []
-  const clusters = clusterData?.data ?? []
-  const registries = registryData?.data ?? []
-
-  const projectTotal = projectData?.pagination?.total ?? projects.length
-  const deployTotal = deployData?.pagination?.total ?? deploys.length
-  const clusterTotal = clusters.length
-  const registryTotal = registries.length
 
   const recentProjectColumns = [
     { title: '项目名称', dataIndex: 'name', key: 'name' },
@@ -80,7 +68,7 @@ export default function Dashboard() {
     },
   ]
 
-  const isLoading = loadingProjects || loadingDeploys || loadingClusters || loadingRegistries
+  const isLoading = loadingOverview || loadingProjects || loadingDeploys
 
   return (
     <div style={{ padding: 24 }}>
@@ -88,35 +76,51 @@ export default function Dashboard() {
 
       {/* Stats cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={4}>
           <Card hoverable onClick={() => navigate('/projects')}>
             {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
-              <Statistic title="项目总数" value={projectTotal}
+              <Statistic title="项目" value={overview?.projects ?? 0}
                 prefix={<ProjectOutlined style={{ color: '#1677ff' }} />} />
             )}
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={4}>
+          <Card hoverable>
+            {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
+              <Statistic title="服务" value={overview?.services ?? 0}
+                prefix={<AppstoreOutlined style={{ color: '#13c2c2' }} />} />
+            )}
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={4}>
           <Card hoverable onClick={() => navigate('/system/clusters')}>
             {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
-              <Statistic title="集群数量" value={clusterTotal}
+              <Statistic title="集群" value={overview?.clusters ?? 0}
                 prefix={<CloudServerOutlined style={{ color: '#52c41a' }} />} />
             )}
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={4}>
           <Card hoverable>
             {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
-              <Statistic title="部署配置" value={deployTotal}
+              <Statistic title="环境" value={overview?.environments ?? 0}
                 prefix={<RocketOutlined style={{ color: '#722ed1' }} />} />
             )}
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
+        <Col xs={24} sm={12} lg={4}>
           <Card hoverable onClick={() => navigate('/artifacts/registries')}>
             {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
-              <Statistic title="镜像仓库" value={registryTotal}
+              <Statistic title="镜像仓库" value={overview?.registries ?? 0}
                 prefix={<InboxOutlined style={{ color: '#fa8c16' }} />} />
+            )}
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={4}>
+          <Card hoverable onClick={() => navigate('/system/integrations')}>
+            {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : (
+              <Statistic title="集成" value={overview?.integrations ?? 0}
+                prefix={<ApiOutlined style={{ color: '#eb2f96' }} />} />
             )}
           </Card>
         </Col>

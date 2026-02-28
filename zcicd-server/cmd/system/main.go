@@ -33,18 +33,21 @@ func main() {
 	clusterRepo := repository.NewClusterRepository(db)
 	integrationRepo := repository.NewIntegrationRepository(db)
 	auditRepo := repository.NewAuditRepository(db)
+	dashRepo := repository.NewDashboardRepository(db)
 
 	// Services
 	notifySvc := service.NewNotifyService(notifyRepo, ruleRepo)
 	clusterSvc := service.NewClusterService(clusterRepo)
 	integrationSvc := service.NewIntegrationService(integrationRepo)
 	auditSvc := service.NewAuditService(auditRepo)
+	dashSvc := service.NewDashboardService(dashRepo)
 
 	// Handlers
 	notifyH := handler.NewNotifyHandler(notifySvc)
 	clusterH := handler.NewClusterHandler(clusterSvc)
 	integrationH := handler.NewIntegrationHandler(integrationSvc)
 	auditH := handler.NewAuditHandler(auditSvc)
+	dashH := handler.NewDashboardHandler(dashSvc)
 
 	// Gin setup
 	r := gin.New()
@@ -57,7 +60,7 @@ func main() {
 	})
 
 	api := r.Group("/api/v1")
-	router.RegisterRoutes(api, cfg.JWT.Secret, notifyH, clusterH, integrationH, auditH)
+	router.RegisterRoutes(api, cfg.JWT.Secret, notifyH, clusterH, integrationH, auditH, dashH)
 
 	port := cfg.Server.Port
 	if port == 0 {

@@ -58,7 +58,32 @@ export interface NotifyRule {
   created_at: string
 }
 
+export interface OverviewStats {
+  projects: number
+  services: number
+  clusters: number
+  environments: number
+  registries: number
+  integrations: number
+}
+
+export interface DailyStat {
+  id: string
+  stat_date: string
+  total_builds: number
+  successful_builds: number
+  failed_builds: number
+  total_deploys: number
+  successful_deploys: number
+  failed_deploys: number
+}
+
 export const systemApi = {
+  // Dashboard
+  getDashboardOverview: () => request.get('/system/dashboard/overview'),
+  getDashboardTrends: (days?: number) =>
+    request.get('/system/dashboard/trends', { params: days ? { days } : undefined }),
+
   // Clusters
   listClusters: (params?: { page?: number; page_size?: number }) =>
     request.get('/system/clusters', { params }),
