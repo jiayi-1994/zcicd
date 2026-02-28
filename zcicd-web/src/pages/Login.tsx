@@ -20,10 +20,12 @@ export default function Login() {
     setLoading(true)
     try {
       const res: any = await authApi.login(values)
+      // Store token first so subsequent requests carry Authorization header
+      useAuthStore.getState().setAuth(res.data.access_token, res.data.refresh_token, { id: '', username: '', email: '', display_name: '', avatar_url: '', roles: [] })
       const profileRes: any = await authApi.getProfile()
       setAuth(res.data.access_token, res.data.refresh_token, profileRes.data)
       message.success('登录成功')
-      navigate('/projects')
+      navigate('/dashboard')
     } catch (err: any) {
       message.error(err?.message || '登录失败')
     } finally {
