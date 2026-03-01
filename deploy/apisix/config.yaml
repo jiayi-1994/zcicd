@@ -54,6 +54,16 @@ routes:
         allow_origins: "*"
       jwt-auth: {}
 
+  - uri: /api/v1/deploys/*
+    upstream:
+      type: roundrobin
+      nodes:
+        "deploy-service:8084": 1
+    plugins:
+      cors:
+        allow_origins: "*"
+      jwt-auth: {}
+
   - uri: /api/v1/deploy/*
     upstream:
       type: roundrobin

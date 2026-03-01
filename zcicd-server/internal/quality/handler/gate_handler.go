@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zcicd/zcicd-server/internal/quality/service"
 	"github.com/zcicd/zcicd-server/pkg/response"
@@ -31,6 +33,10 @@ func (h *QualityGateHandler) Upsert(c *gin.Context) {
 	}
 	g, err := h.svc.Upsert(c.Param("project_id"), req)
 	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "foreign key") {
+			response.NotFound(c, "项目不存在")
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}

@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zcicd/zcicd-server/internal/deploy/service"
 	"github.com/zcicd/zcicd-server/pkg/response"
+	"gorm.io/gorm"
 )
 
 type DeployHandler struct {
@@ -100,6 +102,10 @@ func (h *DeployHandler) TriggerSync(c *gin.Context) {
 	userID := c.GetString("user_id")
 	history, err := h.svc.TriggerSync(c.Request.Context(), c.Param("id"), userID, req)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.NotFound(c, "部署配置不存在")
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}

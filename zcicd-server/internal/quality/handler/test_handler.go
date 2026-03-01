@@ -62,13 +62,8 @@ func (h *TestHandler) DeleteConfig(c *gin.Context) {
 }
 
 func (h *TestHandler) ListConfigs(c *gin.Context) {
-	projectID := c.Query("project_id")
-	if projectID == "" {
-		response.BadRequest(c, "project_id is required")
-		return
-	}
 	page, pageSize := parsePagination(c)
-	list, total, err := h.svc.ListConfigs(projectID, page, pageSize)
+	list, total, err := h.svc.ListConfigs(c.Param("project_id"), page, pageSize)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
