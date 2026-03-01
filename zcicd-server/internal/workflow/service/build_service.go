@@ -19,11 +19,11 @@ import (
 )
 
 type BuildService struct {
-	repo           *repository.BuildRepository
-	templateRepo   *repository.TemplateRepository
-	crdManager     *engine.CRDManager
-	mqClient       *mq.Client
-	namespace      string
+	repo         *repository.BuildRepository
+	templateRepo *repository.TemplateRepository
+	crdManager   *engine.CRDManager
+	mqClient     *mq.Client
+	namespace    string
 }
 
 func NewBuildService(
@@ -75,6 +75,8 @@ func (s *BuildService) CreateConfig(ctx context.Context, req *CreateBuildConfigR
 	if req.BuildEnv != nil {
 		data, _ := json.Marshal(req.BuildEnv)
 		cfg.BuildEnv = datatypes.JSON(data)
+	} else {
+		cfg.BuildEnv = datatypes.JSON([]byte("{}"))
 	}
 	if req.Variables != nil {
 		data, _ := json.Marshal(req.Variables)
@@ -253,14 +255,14 @@ func (s *BuildService) TriggerBuild(ctx context.Context, configID string, userID
 	// Publish build.started event
 	if s.mqClient != nil {
 		eventData, _ := json.Marshal(map[string]interface{}{
-			"build_run_id":   run.ID,
+			"build_run_id":    run.ID,
 			"build_config_id": configID,
-			"run_number":     runNumber,
-			"project_id":     cfg.ProjectID,
-			"service_id":     cfg.ServiceID,
-			"image_tag":      imageTag,
-			"triggered_by":   userID,
-			"triggered_at":   time.Now().Format(time.RFC3339),
+			"run_number":      runNumber,
+			"project_id":      cfg.ProjectID,
+			"service_id":      cfg.ServiceID,
+			"image_tag":       imageTag,
+			"triggered_by":    userID,
+			"triggered_at":    time.Now().Format(time.RFC3339),
 		})
 		s.mqClient.Publish(mq.SubjectBuildStarted, eventData)
 	}

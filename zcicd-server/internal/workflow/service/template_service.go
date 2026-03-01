@@ -24,20 +24,22 @@ func NewTemplateService(repo *repository.TemplateRepository) *TemplateService {
 
 func (s *TemplateService) Create(ctx context.Context, userID string, req *CreateTemplateRequest) (*model.BuildTemplate, error) {
 	tpl := &model.BuildTemplate{
-		Name:        req.Name,
-		Language:    req.Language,
-		Framework:   req.Framework,
-		Description: req.Description,
-		BuildScript: req.BuildScript,
+		Name:          req.Name,
+		Language:      req.Language,
+		Framework:     req.Framework,
+		Description:   req.Description,
+		BuildScript:   req.BuildScript,
 		DockerfileTpl: req.DockerfileTpl,
 		TektonTaskTpl: req.TektonTaskTpl,
-		IsSystem:    false,
-		CreatedBy:   &userID,
+		IsSystem:      false,
+		CreatedBy:     &userID,
 	}
 
 	if req.BuildEnv != nil {
 		data, _ := json.Marshal(req.BuildEnv)
 		tpl.BuildEnv = datatypes.JSON(data)
+	} else {
+		tpl.BuildEnv = datatypes.JSON([]byte("{}"))
 	}
 
 	if err := s.repo.Create(ctx, tpl); err != nil {

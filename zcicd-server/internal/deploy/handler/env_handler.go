@@ -1,9 +1,13 @@
 package handler
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zcicd/zcicd-server/internal/deploy/service"
 	"github.com/zcicd/zcicd-server/pkg/response"
+	"gorm.io/gorm"
 )
 
 type EnvHandler struct {
@@ -31,7 +35,7 @@ func (h *EnvHandler) CreateVariable(c *gin.Context) {
 	}
 	v, err := h.svc.CreateVariable(c.Param("env_id"), req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "环境不存在")
 		return
 	}
 	response.Created(c, v)
@@ -45,7 +49,7 @@ func (h *EnvHandler) UpdateVariable(c *gin.Context) {
 	}
 	v, err := h.svc.UpdateVariable(c.Param("var_id"), req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "环境变量不存在")
 		return
 	}
 	response.OK(c, v)
@@ -66,7 +70,7 @@ func (h *EnvHandler) BatchUpsertVariables(c *gin.Context) {
 		return
 	}
 	if err := h.svc.BatchUpsertVariables(c.Param("env_id"), req); err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "环境不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -75,7 +79,7 @@ func (h *EnvHandler) BatchUpsertVariables(c *gin.Context) {
 func (h *EnvHandler) GetQuota(c *gin.Context) {
 	q, err := h.svc.GetQuota(c.Param("env_id"))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "环境配额不存在")
 		return
 	}
 	response.OK(c, q)
@@ -89,8 +93,21 @@ func (h *EnvHandler) UpsertQuota(c *gin.Context) {
 	}
 	q, err := h.svc.UpsertQuota(c.Param("env_id"), req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "环境不存在")
 		return
 	}
 	response.OK(c, q)
+}
+
+func (h *EnvHandler) handleNotFoundOrInternal(c *gin.Context, err error, fallbackNotFound string) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(strings.ToLower(err.Error()), "record not found") {
+		response.NotFound(c, fallbackNotFound)
+		return
+	}
+	lowerErr := strings.ToLower(err.Error())
+	if strings.Contains(lowerErr, "foreign key") || strings.Contains(lowerErr, "violates foreign key constraint") {
+		response.NotFound(c, "关联资源不存在")
+		return
+	}
+	response.InternalError(c, err.Error())
 }

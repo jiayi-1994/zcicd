@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/zcicd/zcicd-server/internal/workflow/service"
+	appErrors "github.com/zcicd/zcicd-server/pkg/errors"
 	"github.com/zcicd/zcicd-server/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type BuildHandler struct {
@@ -52,7 +56,7 @@ func (h *BuildHandler) UpdateConfig(c *gin.Context) {
 
 	cfg, err := h.svc.UpdateConfig(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建配置不存在")
 		return
 	}
 	response.OK(c, cfg)
@@ -61,7 +65,7 @@ func (h *BuildHandler) UpdateConfig(c *gin.Context) {
 func (h *BuildHandler) DeleteConfig(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.DeleteConfig(c.Request.Context(), id); err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建配置不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -122,7 +126,7 @@ func (h *BuildHandler) TriggerBuild(c *gin.Context) {
 
 	run, err := h.svc.TriggerBuild(c.Request.Context(), configID, userID, &req)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建配置不存在")
 		return
 	}
 	response.Created(c, run)
@@ -178,7 +182,7 @@ func (h *BuildHandler) ListRuns(c *gin.Context) {
 func (h *BuildHandler) CancelRun(c *gin.Context) {
 	runID := c.Param("run_id")
 	if err := h.svc.CancelRun(c.Request.Context(), runID); err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建运行不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -242,7 +246,7 @@ func (h *TemplateHandler) Update(c *gin.Context) {
 
 	tpl, err := h.svc.Update(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建模板不存在")
 		return
 	}
 	response.OK(c, tpl)
@@ -251,7 +255,7 @@ func (h *TemplateHandler) Update(c *gin.Context) {
 func (h *TemplateHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		handleNotFoundOrInternal(c, err, "构建模板不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -265,4 +269,22 @@ func (h *TemplateHandler) List(c *gin.Context) {
 		return
 	}
 	response.OK(c, list)
+}
+
+func handleNotFoundOrInternal(c *gin.Context, err error, fallbackNotFound string) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(strings.ToLower(err.Error()), "record not found") {
+		response.NotFound(c, fallbackNotFound)
+		return
+	}
+	lowerErr := strings.ToLower(err.Error())
+	if strings.Contains(lowerErr, "foreign key") || strings.Contains(lowerErr, "violates foreign key constraint") {
+		response.NotFound(c, "关联资源不存在")
+		return
+	}
+	var appErr *appErrors.AppError
+	if errors.As(err, &appErr) && strings.Contains(appErr.Message, "不存在") {
+		response.NotFound(c, appErr.Message)
+		return
+	}
+	response.Error(c, 500, 50001, err.Error())
 }

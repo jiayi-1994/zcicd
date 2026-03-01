@@ -95,7 +95,7 @@ func (r *WorkflowRepository) ListRuns(ctx context.Context, workflowID string, pa
 	}
 
 	offset := (page - 1) * pageSize
-	if err := query.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&list).Error; err != nil {
+	if err := query.Order("started_at DESC NULLS LAST, id DESC").Offset(offset).Limit(pageSize).Find(&list).Error; err != nil {
 		return nil, 0, err
 	}
 

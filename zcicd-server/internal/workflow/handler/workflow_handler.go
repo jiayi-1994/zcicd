@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/zcicd/zcicd-server/internal/workflow/service"
+	appErrors "github.com/zcicd/zcicd-server/pkg/errors"
 	"github.com/zcicd/zcicd-server/pkg/response"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type WorkflowHandler struct {
@@ -59,7 +63,7 @@ func (h *WorkflowHandler) Update(c *gin.Context) {
 
 	wf, err := h.svc.Update(c.Request.Context(), id, &req)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		h.handleNotFoundOrInternal(c, err, "工作流不存在")
 		return
 	}
 	response.OK(c, wf)
@@ -68,7 +72,7 @@ func (h *WorkflowHandler) Update(c *gin.Context) {
 func (h *WorkflowHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		h.handleNotFoundOrInternal(c, err, "工作流不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -118,7 +122,7 @@ func (h *WorkflowHandler) Trigger(c *gin.Context) {
 
 	run, err := h.svc.Trigger(c.Request.Context(), id, userID, &req)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		h.handleNotFoundOrInternal(c, err, "工作流不存在")
 		return
 	}
 	response.Created(c, run)
@@ -161,7 +165,7 @@ func (h *WorkflowHandler) ListRuns(c *gin.Context) {
 func (h *WorkflowHandler) CancelRun(c *gin.Context) {
 	runID := c.Param("run_id")
 	if err := h.svc.CancelRun(c.Request.Context(), runID); err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		h.handleNotFoundOrInternal(c, err, "工作流运行不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -172,8 +176,26 @@ func (h *WorkflowHandler) RetryRun(c *gin.Context) {
 	userID := c.GetString("user_id")
 	run, err := h.svc.RetryRun(c.Request.Context(), runID, userID)
 	if err != nil {
-		response.Error(c, 500, 50001, err.Error())
+		h.handleNotFoundOrInternal(c, err, "工作流运行不存在")
 		return
 	}
 	response.Created(c, run)
+}
+
+func (h *WorkflowHandler) handleNotFoundOrInternal(c *gin.Context, err error, fallbackNotFound string) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(strings.ToLower(err.Error()), "record not found") {
+		response.NotFound(c, fallbackNotFound)
+		return
+	}
+	lowerErr := strings.ToLower(err.Error())
+	if strings.Contains(lowerErr, "foreign key") || strings.Contains(lowerErr, "violates foreign key constraint") {
+		response.NotFound(c, "关联资源不存在")
+		return
+	}
+	var appErr *appErrors.AppError
+	if errors.As(err, &appErr) && strings.Contains(appErr.Message, "不存在") {
+		response.NotFound(c, appErr.Message)
+		return
+	}
+	response.Error(c, 500, 50001, err.Error())
 }

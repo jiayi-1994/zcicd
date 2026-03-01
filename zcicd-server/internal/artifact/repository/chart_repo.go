@@ -17,9 +17,9 @@ func (r *ChartRepository) Create(c *model.HelmChart) error {
 	return r.db.Create(c).Error
 }
 
-func (r *ChartRepository) Get(id string) (*model.HelmChart, error) {
+func (r *ChartRepository) Get(name string) (*model.HelmChart, error) {
 	var c model.HelmChart
-	err := r.db.Where("id = ?", id).First(&c).Error
+	err := r.db.Where("name = ?", name).First(&c).Error
 	return &c, err
 }
 
@@ -29,6 +29,6 @@ func (r *ChartRepository) List() ([]model.HelmChart, error) {
 	return list, err
 }
 
-func (r *ChartRepository) Delete(id string) error {
-	return r.db.Where("id = ?", id).Delete(&model.HelmChart{}).Error
+func (r *ChartRepository) Delete(name string) error {
+	return r.db.Where("name = ?", name).Delete(&model.HelmChart{}).Error
 }

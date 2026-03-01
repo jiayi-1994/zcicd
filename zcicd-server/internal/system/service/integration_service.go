@@ -15,10 +15,11 @@ func NewIntegrationService(repo *repository.IntegrationRepository) *IntegrationS
 
 func (s *IntegrationService) Create(req CreateIntegrationReq) (*model.Integration, error) {
 	i := &model.Integration{
-		Name:     req.Name,
-		Type:     req.Type,
-		Provider: req.Provider,
-		Status:   "active",
+		Name:      req.Name,
+		Type:      req.Type,
+		Provider:  req.Provider,
+		ConfigEnc: []byte(req.Config),
+		Status:    "active",
 	}
 	return i, s.repo.Create(i)
 }
@@ -37,6 +38,9 @@ func (s *IntegrationService) Update(id string, req UpdateIntegrationReq) (*model
 	}
 	if req.Status != "" {
 		i.Status = req.Status
+	}
+	if req.Config != "" {
+		i.ConfigEnc = []byte(req.Config)
 	}
 	return i, s.repo.Update(i)
 }

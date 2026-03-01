@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zcicd/zcicd-server/internal/deploy/service"
@@ -50,7 +51,7 @@ func (h *DeployHandler) UpdateConfig(c *gin.Context) {
 	}
 	config, err := h.svc.UpdateConfig(c.Request.Context(), c.Param("id"), req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, config)
@@ -58,7 +59,7 @@ func (h *DeployHandler) UpdateConfig(c *gin.Context) {
 
 func (h *DeployHandler) DeleteConfig(c *gin.Context) {
 	if err := h.svc.DeleteConfig(c.Request.Context(), c.Param("id")); err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -102,11 +103,7 @@ func (h *DeployHandler) TriggerSync(c *gin.Context) {
 	userID := c.GetString("user_id")
 	history, err := h.svc.TriggerSync(c.Request.Context(), c.Param("id"), userID, req)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response.NotFound(c, "部署配置不存在")
-			return
-		}
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.Created(c, history)
@@ -130,7 +127,7 @@ func (h *DeployHandler) Rollback(c *gin.Context) {
 func (h *DeployHandler) GetStatus(c *gin.Context) {
 	status, err := h.svc.GetStatus(c.Request.Context(), c.Param("id"))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, status)
@@ -139,7 +136,7 @@ func (h *DeployHandler) GetStatus(c *gin.Context) {
 func (h *DeployHandler) GetResources(c *gin.Context) {
 	tree, err := h.svc.GetResources(c.Request.Context(), c.Param("id"))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, tree)
@@ -168,7 +165,7 @@ func (h *DeployHandler) ListHistories(c *gin.Context) {
 func (h *DeployHandler) GetRolloutStatus(c *gin.Context) {
 	status, err := h.svc.GetRolloutStatus(c.Request.Context(), c.Param("id"))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, status)
@@ -176,7 +173,7 @@ func (h *DeployHandler) GetRolloutStatus(c *gin.Context) {
 
 func (h *DeployHandler) PromoteRollout(c *gin.Context) {
 	if err := h.svc.PromoteRollout(c.Request.Context(), c.Param("id")); err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -184,7 +181,7 @@ func (h *DeployHandler) PromoteRollout(c *gin.Context) {
 
 func (h *DeployHandler) AbortRollout(c *gin.Context) {
 	if err := h.svc.AbortRollout(c.Request.Context(), c.Param("id")); err != nil {
-		response.InternalError(c, err.Error())
+		h.handleNotFoundOrInternal(c, err, "部署配置不存在")
 		return
 	}
 	response.OK(c, nil)
@@ -204,4 +201,17 @@ func parsePagination(c *gin.Context) (int, int) {
 		}
 	}
 	return page, pageSize
+}
+
+func (h *DeployHandler) handleNotFoundOrInternal(c *gin.Context, err error, fallbackNotFound string) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || strings.Contains(strings.ToLower(err.Error()), "record not found") {
+		response.NotFound(c, fallbackNotFound)
+		return
+	}
+	lowerErr := strings.ToLower(err.Error())
+	if strings.Contains(lowerErr, "foreign key") || strings.Contains(lowerErr, "violates foreign key constraint") {
+		response.NotFound(c, "关联资源不存在")
+		return
+	}
+	response.InternalError(c, err.Error())
 }
