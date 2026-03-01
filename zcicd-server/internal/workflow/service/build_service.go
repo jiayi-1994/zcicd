@@ -81,6 +81,8 @@ func (s *BuildService) CreateConfig(ctx context.Context, req *CreateBuildConfigR
 	if req.Variables != nil {
 		data, _ := json.Marshal(req.Variables)
 		cfg.Variables = datatypes.JSON(data)
+	} else {
+		cfg.Variables = datatypes.JSON([]byte("{}"))
 	}
 
 	if err := s.repo.CreateConfig(ctx, cfg); err != nil {

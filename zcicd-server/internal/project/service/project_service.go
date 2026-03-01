@@ -43,6 +43,7 @@ func (s *ProjectService) CreateProject(ctx context.Context, userID string, req *
 		Description: req.Description,
 		OwnerID:     userID,
 		RepoURL:     req.RepoURL,
+		Settings:    datatypes.JSON([]byte("{}")),
 	}
 	if req.DefaultBranch != "" {
 		project.DefaultBranch = req.DefaultBranch
